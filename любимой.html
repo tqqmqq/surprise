@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Для тебя ❤️</title>
+<style>
+  :root {
+    --pink: #ff6b9d;
+    --deep-pink: #c9184a;
+    --gold: #ffd93d;
+    --bg-dark: #0a0a1a;
+    --accent: #ff6b9d;
+    --accent-2: #ffd93d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Georgia', serif;
+    background: var(--bg-dark);
+    color: #fff;
+    transition: background 1s ease;
+    overscroll-behavior: none;
+  }
+
+  #particles-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .sky {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, #1a1a3e 0%, var(--bg-dark) 60%);
+    z-index: 0;
+    transition: background 1.5s ease;
+  }
+  .sky.romantic {
+    background: radial-gradient(ellipse at 50% 0%, #3d1a2e 0%, var(--bg-dark) 60%);
+  }
+
+  .scene {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease, visibility 0.8s;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px;
+  }
+  .scene.active { opacity: 1; visibility: visible; }
+
+  .envelope-wrapper {
+    perspective: 1000px;
+    cursor: pointer;
+    animation: floatY 3s ease-in-out infinite;
+  }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  .envelope {
+    position: relative;
+    width: 300px;
+    height: 200px;
+    background: linear-gradient(135deg, #ffd6e0, var(--accent));
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(255, 107, 157, 0.5);
+    transition: transform 0.5s;
+  }
+  .envelope:hover { transform: scale(1.05); }
+  .envelope::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 0;
+    border-left: 150px solid transparent;
+    border-right: 150px solid transparent;
+    border-top: 100px solid #ffd6e0;
+    border-radius: 8px 8px 0 0;
+    z-index: 2;
+    transform-origin: top;
+    transition: transform 0.8s ease;
+    filter: brightness(1.05);
+  }
+  .envelope.open::before { transform: rotateX(180deg); }
+  .envelope::after {
+    content: '❤️';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    z-index: 3;
+    filter: drop-shadow(0 0 20px var(--accent));
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    25% { transform: translate(-50%, -50%) scale(1.2); }
+    50% { transform: translate(-50%, -50%) scale(1); }
+    75% { transform: translate(-50%, -50%) scale(1.15); }
+  }
+  .envelope.open::after { opacity: 0; }
+
+  .tap-hint {
+    margin-top: 40px;
+    font-size: 1.1rem;
+    color: var(--accent);
+    animation: blink 2s ease-in-out infinite;
+    letter-spacing: 2px;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 7vw, 4rem);
+    text-align: center;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    margin-bottom: 15px;
+    font-weight: 700;
+  }
+  @keyframes shine { to { background-position: 200% center; } }
+
+  .hero-sub {
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    color: var(--accent);
+    opacity: 0.85;
+    font-style: italic;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .counter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 40px;
+    max-width: 600px;
+    width: 100%;
+  }
+  .counter-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 16px;
+    padding: 20px 10px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .counter-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .counter-num {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter-lbl {
+    font-size: 0.75rem;
+    color: var(--accent);
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 5px;
+  }
+
+  .btn {
+    padding: 15px 40px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--deep-pink));
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: transform 0.25s, box-shadow 0.25s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  .btn:hover::before { width: 300px; height: 300px; }
+  .btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 35px color-mix(in srgb, var(--accent) 65%, transparent);
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn span { position: relative; z-index: 1; }
+
+  .section-title {
+    font-size: clamp(1.6rem, 5vw, 2.5rem);
+    color: var(--accent);
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    max-width: 700px;
+    width: 100%;
+    margin-bottom: 30px;
+    perspective: 1000px;
+  }
+  .gallery-item {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease-out, box-shadow 0.3s, border-color 0.3s;
+    background: linear-gradient(135deg, #2a1a2e, #1a1a2e);
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .gallery-item:hover {
+    box-shadow: 0 15px 40px color-mix(in srgb, var(--accent) 50%, transparent);
+    border-color: var(--accent);
+  }
+  .gallery-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+  }
+  .gallery-item .ph {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--accent);
+  }
+  .gallery-item .shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .gallery-item:hover .shine { opacity: 1; }
+
+  .quest-box {
+    max-width: 600px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 24px;
+    padding: 40px 30px;
+    backdrop-filter: blur(10px);
+    text-align: center;
+  }
+  .quest-progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  .quest-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    transition: all 0.4s;
+  }
+  .quest-dot.done {
+    background: var(--accent);
+    box-shadow: 0 0 15px var(--accent);
+    transform: scale(1.3);
+  }
+  .quest-dot.current {
+    background: var(--accent-2);
+    box-shadow: 0 0 15px var(--accent-2);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+  }
+  .quest-question {
+    font-size: 1.3rem;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    color: #ffe5ec;
+    min-height: 60px;
+  }
+  .quest-input {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 12px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  .quest-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .quest-input.error { animation: shake 0.4s; border-color: #ff3b3b; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+  .quest-input.success {
+    border-color: #4ade80;
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+  }
+  .quest-feedback {
+    min-height: 25px;
+    margin-top: 10px;
+    font-size: 0.95rem;
+  }
+  .quest-feedback.err { color: #ff6b6b; }
+  .quest-feedback.ok { color: #4ade80; }
+
+  .final-content {
+    text-align: center;
+    max-width: 700px;
+    z-index: 2;
+  }
+  .final-title {
+    font-size: clamp(2rem, 8vw, 4.5rem);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 4s linear infinite;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .love-letter {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 24px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 30px;
+    text-align: left;
+    line-height: 1.9;
+    font-size: 1.05rem;
+    color: #ffe5ec;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s, transform 1s;
+  }
+  .love-letter.show { opacity: 1; transform: translateY(0); }
+  .love-letter .sig {
+    text-align: right;
+    color: var(--accent);
+    font-style: italic;
+    margin-top: 20px;
+  }
+
+  .nav-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .scene-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    z-index: 100;
+    transition: width 0.6s ease, background 0.5s;
+    box-shadow: 0 0 15px var(--accent);
+  }
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s, visibility 0.4s;
+    padding: 20px;
+    cursor: zoom-out;
+  }
+  .lightbox.show { opacity: 1; visibility: visible; }
+  .lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 16px;
+    box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 50%, transparent);
+    transform: scale(0.8);
+    transition: transform 0.4s;
+  }
+  .lightbox.show img { transform: scale(1); }
+
+  @media (max-width: 600px) {
+    .counter-grid { grid-template-columns: repeat(2, 1fr); }
+    .envelope { width: 240px; height: 160px; }
+    .envelope::before {
+      border-left-width: 120px;
+      border-right-width: 120px;
+      border-top-width: 80px;
+    }
+    .scene {
+      justify-content: flex-start;
+      padding-top: 40px;
+      padding-bottom: 100px;
+    }
+    .quest-box {
+      padding: 25px 18px;
+      margin: auto 0;
+    }
+    .quest-question {
+      font-size: 1.1rem;
+      min-height: auto;
+    }
+    .quest-input {
+      font-size: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky"></div>
+<canvas id="particles-canvas"></canvas>
+<div class="scene-progress" id="sceneProgress"></div>
+
+<section class="scene active" id="scene1">
+  <div class="envelope-wrapper" id="envelopeWrapper">
+    <div class="envelope" id="envelope"></div>
+  </div>
+  <p class="tap-hint">нажми на конверт</p>
+</section>
+
+<section class="scene" id="scene2">
+  <h1 class="hero-title">люблю тебя</h1>
+  <p class="hero-title">мы встречаемся уже:</p>
+  <div class="counter-grid">
+    <div class="counter-card"><span class="counter-num" id="cDays">0</span><span class="counter-lbl">дней</span></div>
+    <div class="counter-card"><span class="counter-num" id="cHours">0</span><span class="counter-lbl">часов</span></div>
+    <div class="counter-card"><span class="counter-num" id="cMins">0</span><span class="counter-lbl">минут</span></div>
+    <div class="counter-card"><span class="counter-num" id="cSecs">0</span><span class="counter-lbl">секунд</span></div>
+  </div>
+  <div class="nav-controls">
+    <button class="btn" onclick="goToScene(3)"><span>наши моменты 📸</span></button>
+  </div>
+</section>
+
+<section class="scene" id="scene3">
+  <h2 class="section-title">наши моменты</h2>
+  <div class="gallery" id="gallery"></div>
+  <div class="nav-controls">
+    <button class="btn" onclick="goToScene(4)"><span>дальше →</span></button>
+  </div>
+</section>
+
+<section class="scene" id="scene4">
+  <h2 class="section-title">тестик</h2>
+  <div class="quest-box">
+    <div class="quest-progress" id="questProgress"></div>
+    <p class="quest-question" id="questQuestion"></p>
+    <input
+      type="text"
+      class="quest-input"
+      id="questInput"
+      placeholder="твой ответ..."
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      inputmode="text"
+    >
+    <button class="btn" id="questSubmit"><span>ответить</span></button>
+    <p class="quest-feedback" id="questFeedback"></p>
+  </div>
+</section>
+
+<section class="scene" id="scene5">
+  <div class="final-content">
+    <h1 class="final-title">я тебя люблю ❤️</h1>
+    <div class="love-letter" id="loveLetter">
+      <p>Любимая Нюта,</p>
+      <p>Я долго думал, как сказать тебе всё то, что чувствую.</p>
+      <p>Ещё три месяца назад я даже не догадывался, что встречу человека, с которым захочу прожить всё самое важное.</p>
+      <p>А теперь ты — первая, кому я пишу, когда просыпаюсь, и последняя, о ком думаю перед сном. Ты та, с кем хочу делить каждый следующий день.</p>
+      <p>Спасибо за каждое «доброе утро» и «спокойной ночи», за твоё терпение, за то, что выбираешь меня снова и снова.</p>
+      <p class="sig">твой тикумыку</p>
+    </div>
+  </div>
+</section>
+
+<div class="lightbox" id="lightbox"><img src="" alt=""></div>
+
+<script>
+
+const CONFIG = {
+  startDate: new Date('2026-09-26T20:00:00'),
+  photos: [
+    'photo1.jpg',
+    'photo2.jpg',
+    'photo3.jpg',
+    'photo4.jpg',
+    'photo5.jpg',
+    'photo6.jpg',
+    'photo7.jpg',
+    'photo8.jpg',
+  ],
+  quest: [
+    { q: 'В каком месяце мы начали встречаться?', a: ['сентябрь', 'сентябре', 'сентября'] },
+    { q: 'Какого цвета мои глаза?', a: ['голубые', 'голубой', 'серо-голубые'] },
+    { q: 'Как ты меня называешь ласково?', a: ['любимый', 'котик'] },
+  ],
+};
+
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let particles = [];
+
+function resize() {
+  W = canvas.width = innerWidth;
+  H = canvas.height = innerHeight;
+}
+resize();
+addEventListener('resize', resize);
+
+class Particle {
+  constructor(x, y, opts = {}) {
+    this.x = x;
+    this.y = y;
+    this.vx = opts.vx ?? (Math.random() - 0.5) * 0.5;
+    this.vy = opts.vy ?? (Math.random() - 0.5) * 0.5;
+    this.size = opts.size ?? Math.random() * 2 + 1;
+    this.life = opts.life ?? 1;
+    this.decay = opts.decay ?? 0;
+    this.color = opts.color ?? `hsla(${330 + Math.random() * 30}, 100%, 70%, 1)`;
+    this.char = opts.char ?? null;
+    this.gravity = opts.gravity ?? 0;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += this.gravity;
+    this.life -= this.decay;
+    this.rotation += this.rotationSpeed;
+  }
+  draw() {
+    if (this.life <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    if (this.char) {
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      ctx.font = `${this.size}px serif`;
+      ctx.fillText(this.char, -this.size / 2, this.size / 2);
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+let stars = [];
+function initStars() {
+  stars = [];
+  const count = Math.min(150, Math.floor(W * H / 8000));
+  for (let i = 0; i < count; i++) {
+    stars.push(new Particle(
+      Math.random() * W,
+      Math.random() * H,
+      {
+        vx: 0, vy: 0,
+        size: Math.random() * 1.8 + 0.3,
+        life: Math.random() * 0.6 + 0.2,
+        decay: 0,
+        color: `rgba(255, 255, 255, ${Math.random() * 0.8 + 0.2})`,
+      }
+    ));
+  }
+}
+initStars();
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  stars.forEach(p => {
+    p.life += (Math.random() - 0.5) * 0.05;
+    p.life = Math.max(0.1, Math.min(1, p.life));
+    p.draw();
+  });
+  particles.forEach(p => { p.update(); p.draw(); });
+  particles = particles.filter(p => p.life > 0 && p.y < H + 150 && p.y > -150);
+  requestAnimationFrame(animate);
+}
+animate();
+
+function heartBurst(x, y, count = 20) {
+  const chars = ['❤️', '💖', '💕', '💗', '💓', '💝'];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 5 + 2;
+    particles.push(new Particle(x, y, {
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: Math.random() * 20 + 15,
+      life: 1,
+      decay: 0.012,
+      char: chars[Math.floor(Math.random() * chars.length)],
+      gravity: 0.08,
+    }));
+  }
+}
+
+addEventListener('click', (e) => {
+  if (e.target.closest('button, input, a, .gallery-item')) return;
+  heartBurst(e.clientX, e.clientY, 8);
+});
+
+let currentScene = 1;
+const TOTAL_SCENES = 5;
+
+function goToScene(n) {
+  if (n === currentScene) return;
+  document.getElementById('scene' + currentScene).classList.remove('active');
+  currentScene = n;
+  document.getElementById('scene' + n).classList.add('active');
+  updateProgress();
+  onSceneEnter(n);
+}
+function updateProgress() {
+  document.getElementById('sceneProgress').style.width = (currentScene / TOTAL_SCENES) * 100 + '%';
+}
+updateProgress();
+
+function onSceneEnter(n) {
+  if (n === 2) document.getElementById('sky').classList.add('romantic');
+  if (n === 5) {
+    setTimeout(() => {
+      document.getElementById('loveLetter').classList.add('show');
+    }, 400);
+  }
+}
+
+const envelope = document.getElementById('envelope');
+document.getElementById('envelopeWrapper').addEventListener('click', () => {
+  if (envelope.classList.contains('open')) return;
+  envelope.classList.add('open');
+  heartBurst(innerWidth / 2, innerHeight / 2, 30);
+  setTimeout(() => goToScene(2), 900);
+});
+
+function updateCounter() {
+  const now = new Date();
+  const diff = Math.max(0, now - CONFIG.startDate);
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor(diff / 3600000) % 24;
+  const mins = Math.floor(diff / 60000) % 60;
+  const secs = Math.floor(diff / 1000) % 60;
+  setNum('cDays', days);
+  setNum('cHours', hours);
+  setNum('cMins', mins);
+  setNum('cSecs', secs);
+}
+function setNum(id, val) {
+  const el = document.getElementById(id);
+  if (el.textContent !== String(val)) el.textContent = val;
+}
+setInterval(updateCounter, 1000);
+updateCounter();
+
+const gallery = document.getElementById('gallery');
+CONFIG.photos.forEach((src) => {
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = 'Наше фото';
+  img.loading = 'lazy';
+  img.onerror = () => { item.innerHTML = '<div class="ph">💑</div>'; };
+  const shine = document.createElement('div');
+  shine.className = 'shine';
+  item.appendChild(img);
+  item.appendChild(shine);
+
+  item.addEventListener('mousemove', (e) => {
+    const rect = item.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const rotX = ((y - cy) / cy) * -12;
+    const rotY = ((x - cx) / cx) * 12;
+    item.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.05)`;
+    shine.style.background = `linear-gradient(105deg, transparent ${40 + (x / rect.width) * 20}%, rgba(255,255,255,0.4) ${50 + (x / rect.width) * 20}%, transparent ${60 + (x / rect.width) * 20}%)`;
+  });
+  item.addEventListener('mouseleave', () => {
+    item.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+  });
+  item.addEventListener('click', () => openLightbox(src));
+  gallery.appendChild(item);
+});
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = lightbox.querySelector('img');
+function openLightbox(src) {
+  lightboxImg.src = src;
+  lightbox.classList.add('show');
+}
+lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+
+let questIndex = 0;
+const questProgress = document.getElementById('questProgress');
+const questQuestion = document.getElementById('questQuestion');
+const questInput = document.getElementById('questInput');
+const questSubmit = document.getElementById('questSubmit');
+const questFeedback = document.getElementById('questFeedback');
+
+function renderQuestDots() {
+  questProgress.innerHTML = '';
+  CONFIG.quest.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'quest-dot';
+    if (i < questIndex) dot.classList.add('done');
+    else if (i === questIndex) dot.classList.add('current');
+    questProgress.appendChild(dot);
+  });
+}
+
+function loadQuest() {
+  renderQuestDots();
+  if (questIndex >= CONFIG.quest.length) {
+    questQuestion.textContent = 'Все ответы верны!';
+    questInput.style.display = 'none';
+    questSubmit.innerHTML = '<span>К финалу ✨</span>';
+    questSubmit.onclick = () => goToScene(5);
+    questFeedback.textContent = '';
+    return;
+  }
+  questQuestion.textContent = CONFIG.quest[questIndex].q;
+  questInput.value = '';
+  questInput.style.display = 'block';
+  questInput.classList.remove('error', 'success');
+  questFeedback.textContent = '';
+  questFeedback.className = 'quest-feedback';
+  questSubmit.innerHTML = '<span>ответить</span>';
+  questSubmit.onclick = checkAnswer;
+
+  if (window.innerWidth > 768) {
+    questInput.focus();
+  }
+
+  setTimeout(() => {
+    const scene = document.getElementById('scene4');
+    if (scene) scene.scrollTop = 0;
+  }, 100);
+}
+
+function checkAnswer() {
+  if (questIndex >= CONFIG.quest.length) return;
+
+  const raw = questInput.value;
+  const val = raw.trim().toLowerCase()
+    .replace(/[.,!?;:()"'«»]/g, '')
+    .replace(/\s+/g, ' ');
+
+  if (val.length < 3 || !/[а-яёa-z]/i.test(val)) {
+    questInput.classList.add('error');
+    questFeedback.textContent = 'Напиши ответ полностью 💭';
+    questFeedback.className = 'quest-feedback err';
+    setTimeout(() => questInput.classList.remove('error'), 500);
+    return;
+  }
+
+  const answers = CONFIG.quest[questIndex].a.map(a => a.toLowerCase().trim());
+
+  const ok = answers.some(a => {
+    if (!val.includes(a)) return false;
+    if (val.length > a.length + 10) return false;
+    return true;
+  });
+
+  if (ok) {
+    questInput.classList.add('success');
+    questFeedback.textContent = 'Правильно! 💖';
+    questFeedback.className = 'quest-feedback ok';
+    const r = questInput.getBoundingClientRect();
+    heartBurst(r.left + r.width / 2, r.top, 12);
+    setTimeout(() => { questIndex++; loadQuest(); }, 900);
+  } else {
+    questInput.classList.add('error');
+    questFeedback.textContent = 'Хм, попробуй ещё раз 💭';
+    questFeedback.className = 'quest-feedback err';
+    setTimeout(() => questInput.classList.remove('error'), 500);
+  }
+}
+
+questInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAnswer(); });
+
+loadQuest();
+
+setTimeout(() => heartBurst(innerWidth / 2, innerHeight / 2, 20), 500);
+</script>
+</body>
+</html>
